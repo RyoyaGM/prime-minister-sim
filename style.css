@@ -1,0 +1,98 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    color: #004d40;
+}
+
+#game-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+#status-panel {
+    flex: 1;
+    padding: 20px;
+    background-color: #e0f2f1;
+    border-right: 1px solid #b2dfdb;
+}
+
+#status-panel h2 {
+    color: #00796b;
+    border-bottom: 2px solid #00796b;
+    padding-bottom: 5px;
+}
+
+#status-panel p {
+    margin: 8px 0;
+}
+
+#main-content {
+    flex: 3;
+    padding: 20px;
+}
+
+#message-area {
+    min-height: 150px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #fff8e1;
+    border-radius: 4px;
+}
+
+.message {
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+#action-panel h2 {
+    color: #d84315;
+    margin-top: 0;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #4db6ac;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #00897b;
+}
+
+.next-turn-btn {
+    background-color: #e57373;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.next-turn-btn:hover {
+    background-color: #d32f2f;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #bdbdbd;
+    margin: 15px 0;
+}
