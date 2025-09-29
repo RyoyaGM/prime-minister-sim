@@ -12,6 +12,7 @@ let game = {
 
 let player = {
     name: "新人議員 A",
+    age: 25, // 初期年齢25歳
     position: "衆議院議員",
     partyRank: "平議員", 
     funds: 500, // 単位: 万円
@@ -48,11 +49,13 @@ const actions = {
             player.funds -= 10;
             return `資金調達に成功し、${gain}万円を獲得。党内での発言力もわずかに向上。`;
         }
-    },
+    }
+    ,
     policy: {
         title: "政策立案・勉強会",
         cost: 30,
         effect: () => {
+            if (!player.isElected) return "浪人中は政策立案活動に大きな効果はありません。";
             player.approval += 1;
             player.funds -= 30;
             house.rulingPartyApproval += 0.2; 
@@ -63,6 +66,7 @@ const actions = {
         title: "派閥会合に参加",
         cost: 0,
         effect: () => {
+            if (!player.isElected) return "浪人中は派閥会合には参加できません。";
             const influenceGain = Math.floor(Math.random() * 5) + 1;
             player.influence += influenceGain;
             player.approval -= 1; 
@@ -101,12 +105,16 @@ const electionActions = {
 function updateUI() {
     // 議席、ステータスパネルの更新
     house.oppositionSeats = house.totalSeats - house.rulingPartySeats;
+    
     document.getElementById('player-name').textContent = player.name;
+    document.getElementById('player-age').textContent = player.age; // 年齢の表示
     document.getElementById('player-position').textContent = player.position;
     document.getElementById('party-rank').textContent = player.partyRank;
     document.getElementById('funds').textContent = player.funds.toFixed(0);
     document.getElementById('approval').textContent = player.approval.toFixed(1);
     document.getElementById('influence').textContent = player.influence.toFixed(0);
+    
+    // 国会情報の更新
     document.getElementById('ruling-seats').textContent = house.rulingPartySeats;
     document.getElementById('opposition-seats').textContent = house.oppositionSeats;
     document.getElementById('turn-counter').textContent = game.turn;
@@ -132,15 +140,11 @@ function updateUI() {
         actionTitle.textContent = '⚡ アクションを選択';
     }
 
-    // ゲームオーバー判定
-    if (!player.isElected && game.turn > 1) { 
-        endGame("選挙で議席を失い、浪人となりました...");
-    }
-    if (player.funds < 0) {
-        endGame("資金が尽き、政治活動が不可能になりました...");
-    }
-    if (player.approval < 5) {
-        endGame("国民の支持を完全に失い、政治生命が絶たれました...");
+    // 失敗によるゲームオーバー判定は削除されました。
+    // 浪人中（isElected: false）は、役職を「浪人」と表示
+    if (!player.isElected) {
+        document.getElementById('player-position').textContent = "浪人";
+        document.getElementById('party-rank').textContent = "再起を目指す";
     }
 }
 
@@ -173,7 +177,7 @@ function initializeGame() {
     player.name = prompt("あなたの政治家名を入力してください:", "田中太郎");
     if (!player.name) player.name = "田中太郎";
     
-    displayMessage(`ようこそ、**${player.name}**議員。あなたの首相への道が始まります。衆議院選挙まであと${game.monthsUntilElection}ヶ月です。`);
+    displayMessage(`ようこそ、**${player.name}**議員（${player.age}歳）。あなたの首相への道が始まります。衆議院選挙まであと${game.monthsUntilElection}ヶ月です。`);
     updateUI();
 }
 
@@ -182,6 +186,13 @@ function performAction(actionId) {
     if (game.gameOver || game.gameState === 'ELECTION') return;
     
     const action = actions[actionId];
+    
+    // 浪人中は一部アクションを制限
+    if (!player.isElected && (actionId === 'policy' || actionId === 'faction_meeting')) {
+        displayMessage("浪人中は、国会活動や派閥会合には参加できません。再選を目指す資金集めや地元活動に集中しましょう。", true);
+        return;
+    }
+
     if (player.funds < action.cost) {
         displayMessage(`資金が足りません！ (必要: ${action.cost}万円)`, true);
         return;
@@ -205,8 +216,6 @@ function performElectionAction(actionId) {
     
     const resultMsg = action.effect();
     displayMessage(`[${action.title}] ${resultMsg}`);
-
-    // 選挙アクションを実行しても、ターン進行は「1日経過」ボタンを押すまで待つ
 }
 
 
@@ -225,7 +234,15 @@ function nextTurn() {
 // 通常ターン（月単位）の処理
 function handleNormalTurn() {
     // 1. 基本的なパラメータ変動
-    player.funds -= 20; 
+    // 浪人中は経費を減らす
+    if (player.isElected) {
+        player.funds -= 20; 
+    } else {
+        player.funds -= 5; // 浪人中の最低限の経費
+        // 浪人中は支持率がさらに下がりやすい
+        player.approval = Math.max(0, player.approval - 1.0);
+    }
+    
     player.approval = Math.max(0, player.approval - 0.5); 
     house.rulingPartyApproval = Math.max(10, Math.min(90, house.rulingPartyApproval - 0.1));
 
@@ -239,7 +256,11 @@ function handleNormalTurn() {
     }
 
     // 4. 役職昇進のチェック
-    checkPromotion();
+    if (player.isElected) {
+        checkPromotion();
+    } else {
+        // 浪人中は昇進チェックなし
+    }
 
     // 5. ランダムイベント
     if (Math.random() < 0.1) { 
@@ -247,6 +268,12 @@ function handleNormalTurn() {
     }
     
     game.turn++;
+
+    // 6. 年齢の増加 (12ヶ月経過ごとに年齢+1)
+    if ((game.turn - 1) % 12 === 0) { // 13ヶ月目, 25ヶ月目... の開始時に年齢を上げる
+        player.age++;
+        displayMessage(`🎉 誕生日を迎え、**${player.age}歳**になりました。`, true);
+    }
 }
 
 // 選挙期間（日単位）の処理
@@ -267,7 +294,6 @@ function handleElectionDay() {
         return;
     }
     
-    // UIを更新（日数の変更を即座に反映）
     updateUI();
 }
 
@@ -281,7 +307,7 @@ function startElectionPhase() {
 
 // 世論調査のロジック
 function pollResults() {
-    const currentApproval = player.approval + (Math.random() * 5 - 2.5); // 誤差
+    const currentApproval = player.approval + (Math.random() * 5 - 2.5); 
     const currentRulingApproval = house.rulingPartyApproval + (Math.random() * 5 - 2.5);
     
     const expectedSeats = house.totalSeats * (currentRulingApproval / 100);
@@ -316,10 +342,19 @@ function runElectionResult() {
 
     if (!playerElected) {
         player.isElected = false;
-        displayMessage("❌ **残念ながら、あなたは議席を失いました。** 政治生命は絶たれます。", true);
+        // 浪人としてゲーム続行
+        displayMessage("❌ **残念ながら、あなたは議席を失いました。** 浪人として、再起を目指すことになります。", true);
+        player.position = "浪人";
+        player.partyRank = "無所属";
+
     } else {
         player.isElected = true;
         displayMessage("✅ **再選:** あなたは激戦を勝ち抜き、無事に議席を守りました！");
+        // 再選した場合、役職をリセット（例：平議員に戻る）
+        if (player.position === "浪人") {
+             player.position = "衆議院議員";
+             player.partyRank = "平議員";
+        }
     }
 
     checkPrimeMinister();
@@ -348,7 +383,6 @@ function checkPromotion() {
 
 // 首相就任判定（最終目標）
 function checkPrimeMinister() {
-    // 首相になる条件: 議席を維持し、党総裁候補であり、与党が過半数を維持している
     if (player.isElected && player.position === "党総裁候補" && house.rulingPartySeats > house.totalSeats / 2) {
         endGame("🏆 **祝！総理大臣就任！** あなたは激しい党内競争と国政選挙を勝ち抜き、ついに日本の首相に就任しました！", true);
     }
@@ -368,10 +402,10 @@ function triggerRandomEvent() {
 }
 
 
-// ゲームオーバー処理
+// ゲームクリア画面（ゲームオーバーではない）
 function endGame(message, isWin = false) {
     game.gameOver = true;
-    const endTitle = isWin ? "ゲームクリア！" : "ゲームオーバー";
+    const endTitle = isWin ? "ゲームクリア！" : "ゲーム終了";
     displayMessage(`\n--- ${endTitle} ---`);
     displayMessage(message);
     document.getElementById('action-panel').innerHTML = `<h2>${endTitle}</h2><p>${message}</p><button onclick="window.location.reload()">再スタート</button>`;
