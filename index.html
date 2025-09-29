@@ -13,7 +13,7 @@
         <div id="status-panel">
             <h2>👤 プレイヤー情報</h2>
             <p><strong>名前:</strong> <span id="player-name"></span></p>
-            <p><strong>役職:</strong> <span id="player-position"></span></p>
+            <p><strong>年齢:</strong> <span id="player-age"></span> 歳</p> <p><strong>役職:</strong> <span id="player-position"></span></p>
             <p><strong>党内地位:</strong> <span id="party-rank"></span></p>
             <p><strong>資金:</strong> <span id="funds"></span> 万円</p>
             <p><strong>国民支持率:</strong> <span id="approval"></span> %</p>
@@ -24,7 +24,7 @@
             <p><strong>与党議席:</strong> <span id="ruling-seats"></span> / 465</p>
             <p><strong>野党議席:</strong> <span id="opposition-seats"></span> / 465</p>
             <hr>
-            <p><strong>次の選挙まで:</strong> <span id="election-timer"></span> ヶ月</p>
+            <p><strong>次の選挙まで:</strong> <span id="election-timer"></span></p>
             <p><strong>ゲーム経過:</strong> <span id="turn-counter"></span> ヶ月目</p>
         </div>
 
@@ -33,23 +33,23 @@
                 </div>
 
             <div id="action-panel">
-    <h2 id="action-title">⚡ アクションを選択</h2>
-    
-    <div id="normal-actions">
-        <button onclick="performAction('campaign')">🎤 地元で選挙活動</button>
-        <button onclick="performAction('fundraising')">💰 資金調達パーティー</button>
-        <button onclick="performAction('policy')">📜 政策立案・勉強会</button>
-        <button onclick="performAction('faction_meeting')">🤝 派閥会合に参加</button>
-    </div>
+                <h2 id="action-title">⚡ アクションを選択</h2>
+                
+                <div id="normal-actions">
+                    <button onclick="performAction('campaign')">🎤 地元で選挙活動</button>
+                    <button onclick="performAction('fundraising')">💰 資金調達パーティー</button>
+                    <button onclick="performAction('policy')">📜 政策立案・勉強会</button>
+                    <button onclick="performAction('faction_meeting')">🤝 派閥会合に参加</button>
+                </div>
 
-    <div id="election-actions" style="display: none;">
-        <button onclick="performElectionAction('stumpSpeech')">🗣 大衆向け遊説</button>
-        <button onclick="performElectionAction('tvDebate')">📺 テレビ討論会に出演 (費用: 100万円)</button>
-    </div>
-    
-    <hr>
-    <button class="next-turn-btn" onclick="nextTurn()">➡️ ターン終了（次月へ）</button>
-</div>
+                <div id="election-actions" style="display: none;">
+                    <button onclick="performElectionAction('stumpSpeech')">🗣 大衆向け遊説</button>
+                    <button onclick="performElectionAction('tvDebate')">📺 テレビ討論会に出演 (費用: 100万円)</button>
+                </div>
+                
+                <hr>
+                <button class="next-turn-btn" onclick="nextTurn()">➡️ ターン終了（次月へ）</button>
+            </div>
         </div>
     </div>
 
