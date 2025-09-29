@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首相への道 - 政治シミュレーション</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>首相への道</h1>
+
+    <div id="game-container">
+        <div id="status-panel">
+            <h2>👤 プレイヤー情報</h2>
+            <p><strong>名前:</strong> <span id="player-name"></span></p>
+            <p><strong>役職:</strong> <span id="player-position"></span></p>
+            <p><strong>党内地位:</strong> <span id="party-rank"></span></p>
+            <p><strong>資金:</strong> <span id="funds"></span> 万円</p>
+            <p><strong>国民支持率:</strong> <span id="approval"></span> %</p>
+            <p><strong>党内人脈:</strong> <span id="influence"></span></p>
+            <hr>
+            <p><strong>ゲーム経過:</strong> <span id="turn-counter"></span> ヶ月目</p>
+        </div>
+
+        <div id="main-content">
+            <div id="message-area">
+                </div>
+
+            <div id="action-panel">
+                <h2>⚡ アクションを選択</h2>
+                <button onclick="performAction('campaign')">🎤 地元で選挙活動</button>
+                <button onclick="performAction('fundraising')">💰 資金調達パーティー</button>
+                <button onclick="performAction('policy')">📜 政策立案・勉強会</button>
+                <button onclick="performAction('faction_meeting')">🤝 派閥会合に参加</button>
+                <hr>
+                <button class="next-turn-btn" onclick="nextTurn()">➡️ ターン終了（次月へ）</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
