@@ -4,7 +4,7 @@
 
 let game = {
     turn: 1, 
-    gameOver: false,
+    gameOver: false, // このフラグは首相就任時のみ確認される
     monthsUntilElection: 48, // 衆議院選挙までの月数
     gameState: 'NORMAL', // 'NORMAL', 'ELECTION'
     electionDay: 0,      // 選挙期間中の経過日数 (1-12)
@@ -19,6 +19,7 @@ let player = {
     approval: 40, // 国民支持率 (%)
     influence: 10, // 党内人脈/影響力
     isElected: true, // 議席を持っているか
+    isPM: false, // 首相であるか
 };
 
 let house = {
@@ -140,11 +141,29 @@ function updateUI() {
         actionTitle.textContent = '⚡ アクションを選択';
     }
 
-    // 失敗によるゲームオーバー判定は削除されました。
+    // 首相就任時の表示
+    if (player.isPM) {
+        document.getElementById('player-position').textContent = "内閣総理大臣";
+        document.getElementById('party-rank').textContent = "党総裁";
+        actionTitle.textContent = '👑 首相としてのアクション';
+    }
     // 浪人中（isElected: false）は、役職を「浪人」と表示
-    if (!player.isElected) {
+    else if (!player.isElected) {
         document.getElementById('player-position').textContent = "浪人";
         document.getElementById('party-rank').textContent = "再起を目指す";
+    }
+
+    // 資金が非常に少ない場合、警告を表示（ゲームは停止しない）
+    if (player.funds < 50) {
+        document.getElementById('funds').style.color = 'red';
+    } else {
+        document.getElementById('funds').style.color = 'inherit';
+    }
+    // 支持率が非常に低い場合、警告を表示（ゲームは停止しない）
+    if (player.approval < 15) {
+        document.getElementById('approval').style.color = 'red';
+    } else {
+        document.getElementById('approval').style.color = 'inherit';
     }
 }
 
@@ -183,7 +202,7 @@ function initializeGame() {
 
 // 通常期間のアクション実行処理
 function performAction(actionId) {
-    if (game.gameOver || game.gameState === 'ELECTION') return;
+    if (game.gameState === 'ELECTION') return;
     
     const action = actions[actionId];
     
@@ -195,22 +214,22 @@ function performAction(actionId) {
 
     if (player.funds < action.cost) {
         displayMessage(`資金が足りません！ (必要: ${action.cost}万円)`, true);
+        // 資金不足でもゲームは継続
         return;
     }
     
     const resultMsg = action.effect();
     displayMessage(`[${action.title}] ${resultMsg}`);
-    
-    // アクションを実行しても、ターン進行は「ターン終了」ボタンを押すまで待つ
 }
 
 // 選挙期間のアクション実行処理
 function performElectionAction(actionId) {
-    if (game.gameOver || game.gameState !== 'ELECTION') return;
+    if (game.gameState !== 'ELECTION') return;
 
     const action = electionActions[actionId];
     if (player.funds < action.cost) {
         displayMessage(`資金が足りません！ (必要: ${action.cost}万円)`, true);
+        // 資金不足でもゲームは継続
         return;
     }
     
@@ -221,8 +240,6 @@ function performElectionAction(actionId) {
 
 // ターン終了処理 (メイン関数)
 function nextTurn() {
-    if (game.gameOver) return;
-
     if (game.gameState === 'ELECTION') {
         handleElectionDay();
     } else {
@@ -234,13 +251,11 @@ function nextTurn() {
 // 通常ターン（月単位）の処理
 function handleNormalTurn() {
     // 1. 基本的なパラメータ変動
-    // 浪人中は経費を減らす
     if (player.isElected) {
         player.funds -= 20; 
     } else {
         player.funds -= 5; // 浪人中の最低限の経費
-        // 浪人中は支持率がさらに下がりやすい
-        player.approval = Math.max(0, player.approval - 1.0);
+        player.approval = Math.max(0, player.approval - 1.0); // 浪人中は支持率がさらに下がりやすい
     }
     
     player.approval = Math.max(0, player.approval - 0.5); 
@@ -258,8 +273,6 @@ function handleNormalTurn() {
     // 4. 役職昇進のチェック
     if (player.isElected) {
         checkPromotion();
-    } else {
-        // 浪人中は昇進チェックなし
     }
 
     // 5. ランダムイベント
@@ -270,7 +283,7 @@ function handleNormalTurn() {
     game.turn++;
 
     // 6. 年齢の増加 (12ヶ月経過ごとに年齢+1)
-    if ((game.turn - 1) % 12 === 0) { // 13ヶ月目, 25ヶ月目... の開始時に年齢を上げる
+    if ((game.turn - 1) % 12 === 0) { 
         player.age++;
         displayMessage(`🎉 誕生日を迎え、**${player.age}歳**になりました。`, true);
     }
@@ -342,7 +355,6 @@ function runElectionResult() {
 
     if (!playerElected) {
         player.isElected = false;
-        // 浪人としてゲーム続行
         displayMessage("❌ **残念ながら、あなたは議席を失いました。** 浪人として、再起を目指すことになります。", true);
         player.position = "浪人";
         player.partyRank = "無所属";
@@ -350,7 +362,7 @@ function runElectionResult() {
     } else {
         player.isElected = true;
         displayMessage("✅ **再選:** あなたは激戦を勝ち抜き、無事に議席を守りました！");
-        // 再選した場合、役職をリセット（例：平議員に戻る）
+        // 浪人から再選した場合、役職をリセット
         if (player.position === "浪人") {
              player.position = "衆議院議員";
              player.partyRank = "平議員";
@@ -383,8 +395,14 @@ function checkPromotion() {
 
 // 首相就任判定（最終目標）
 function checkPrimeMinister() {
-    if (player.isElected && player.position === "党総裁候補" && house.rulingPartySeats > house.totalSeats / 2) {
-        endGame("🏆 **祝！総理大臣就任！** あなたは激しい党内競争と国政選挙を勝ち抜き、ついに日本の首相に就任しました！", true);
+    // 首相になる条件: 議席を維持し、党総裁候補であり、与党が過半数を維持している
+    if (!player.isPM && player.isElected && player.position === "党総裁候補" && house.rulingPartySeats > house.totalSeats / 2) {
+        player.isPM = true;
+        player.position = "内閣総理大臣";
+        player.partyRank = "党総裁";
+        
+        // 勝利を祝い、ゲームを継続
+        displayMessage("👑 **祝！内閣総理大臣に就任！** あなたは激しい競争と国政選挙を勝ち抜き、ついに日本の首相の座に就きました！ゲームは継続し、あなたは首相として国を運営します。", true);
     }
 }
 
@@ -399,16 +417,6 @@ function triggerRandomEvent() {
     const event = events[Math.floor(Math.random() * events.length)];
     event.effect();
     displayMessage(event.msg, true);
-}
-
-
-// ゲームクリア画面（ゲームオーバーではない）
-function endGame(message, isWin = false) {
-    game.gameOver = true;
-    const endTitle = isWin ? "ゲームクリア！" : "ゲーム終了";
-    displayMessage(`\n--- ${endTitle} ---`);
-    displayMessage(message);
-    document.getElementById('action-panel').innerHTML = `<h2>${endTitle}</h2><p>${message}</p><button onclick="window.location.reload()">再スタート</button>`;
 }
 
 // ページロード時にゲームを開始
